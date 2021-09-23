@@ -7,6 +7,7 @@ import requests
 
 from bs4 import BeautifulSoup
 from dateparser.search import search_dates
+import pandas as pd
 
 
 def scrape_articles_data(
@@ -164,3 +165,192 @@ def parse_incidents(incidents: list) -> dict:
         "no_case_count": no_case_counts,
         "incident_text": incidents_out,
     }
+
+
+def data_to_dataframe(all_data: dict) -> object:
+    """
+    Format and sort the output of parse_incidents()
+    """
+    all_data = pd.DataFrame(all_data)
+    all_data = all_data[
+        [
+            "incident_date",
+            "letter_date",
+            "school",
+            "cases_count",
+            "no_case_count",
+            "incident_text",
+        ]
+    ]
+    all_data.sort_values(
+        ["incident_date", "school", "letter_date", "cases_count"], inplace=True
+    )
+    return all_data
+
+
+def fix_school_names(all_data: object) -> object:
+    name_corrections = {
+        "Barnard ES": "Barnard",
+        "Beers ES": "Beers",
+        "Boone Elementary": "Boone",
+        "Bruce-Monrow": "Bruce-Monroe",
+        "CW Harris": "C.W. Harris",
+        "Excel Academy": "Excel",
+        "Excel-Academy": "Excel",
+        "GarrisonElementary": "Garrison",
+        "H.D.Cooke ": "H.D. Cooke",
+        "H.D.Cooke": "H.D. Cooke",
+        "HD Cooke": "H.D. Cooke",
+        "H.D. Woodson": "Woodson",
+        "HD Woodson": "Woodson",
+        "Houston ES": "Houston",
+        "Ida.B.Wells": "Ida B. Wells",
+        "J.O. Wilson Elementary": "J.O. Wilson",
+        "Jefferson MS": "Jefferson",
+        "John Hayden Johnson Middle School": "Johnson",
+        "Kimball Elementary": "Kimball",
+        "King ES": "King",
+        "King Elementary": "King",
+        "Langdon ES": "Langdon",
+        "Mann Elementary": "Mann",
+        "Maury Elementary": "Maury",
+        "McKinley High School": "McKinley High",
+        "McKinley Tech High School": "McKinley High",
+        "McKinley Middle School": "McKinkey Middle",
+        "Miner Elementary": "Miner",
+        "Moten Elementary": "Moten",
+        "Nalle Elementary School": "Nalle",
+        "Oyster-Adams (Adams)": "Oyster-Adams",
+        "Peabody and Watkins": "Peabody Watkins",
+        "Peabody": "Peabody Watkins",
+        "Roosevelt STAY High School": "Roosevelt STAY",
+        "School Without Walls at Francis-Stevens": "SWW @ Francis Stevens",
+        "School Within Walls": "School Without Walls",
+        "Seaton ES": "Seaton",
+        "Stuart Hobson": "Stuart-Hobson",
+        "Stuart-Hobson Middle": "Stuart-Hobson",
+        "Thomas Elementary": "Thomas",
+        "Thomson Elementary": "Thomson",
+        "Tubman Elementary School": "Tubman",
+        "Van Ness Elementary School": "Van Ness",
+    }
+    all_data["school"] = all_data["school"].replace(name_corrections)
+    return all_data
+
+
+def append_school_levels(all_data: object) -> object:
+    school_level_decode = {
+        "Aiton": "Elementary",
+        "Amidon-Bowen": "Elementary",
+        "Anacostia": "High",
+        "Ballou": "High",
+        "Ballou STAY": "High",
+        "Bancroft": "Elementary",
+        "Banneker": "High",
+        "Bard": "High",
+        "Barnard": "Elementary",
+        "Beers": "Elementary",
+        "Boone": "Elementary",
+        "Brent": "Elementary",
+        "Brightwood": "Elementary",
+        "Brookland": "Middle",
+        "Browne": "PK-8",
+        "Bruce-Monroe": "Elementary",
+        "Bunker Hill": "Elementary",
+        "Burroughs": "Elementary",
+        "Burrville": "Elementary",
+        "C.W. Harris": "Elementary",
+        "Capitol Hill Montessori": "Elementary",
+        "Cardozo": "6-12",
+        "CHEC": "6-12",
+        "Cleveland": "Elementary",
+        "Coolidge": "High",
+        "Deal": "Middle",
+        "Dorothy I. Height": "Elementary",
+        "Drew": "Elementary",
+        "Dunbar": "High",
+        "Eastern": "High",
+        "Eaton": "Elementary",
+        "Eliot-Hine": "Middle",
+        "Ellington": "High",
+        "Excel": "PK-8",
+        "Garfield": "Elementary",
+        "Garrison": "Elementary",
+        "H.D. Cooke": "Elementary",
+        "Hardy": "Middle",
+        "Hart": "Middle",
+        "Hendley": "Elementary",
+        "Houston": "Elementary",
+        "Ida B. Wells": "Middle",
+        "J.O. Wilson": "Elementary",
+        "Janney": "Elementary",
+        "Jefferson": "Middle",
+        "Johnson": "Middle",
+        "Kelly Miller": "Middle",
+        "Ketcham": "Elementary",
+        "Key": "Elementary",
+        "Kimball": "Elementary",
+        "King": "Elementary",
+        "Kramer": "Middle",
+        "Lafayette": "Elementary",
+        "Langdon": "Elementary",
+        "Langley": "Elementary",
+        "Leckie": "PK-8",
+        "Ludlow-Taylor": "Elementary",
+        "Luke C. Moore": "High",
+        "MacFarland": "Middle",
+        "Malcolm X": "Elementary",
+        "Marie Reed": "Elementary",
+        "Maury": "Elementary",
+        "McKinkey Middle": "Middle",
+        "McKinley": "Unknown",
+        "McKinley High": "High",
+        "Military Road": "PK",
+        "Miner": "Elementary",
+        "Moten": "Elementary",
+        "Murch": "Elementary",
+        "Nalle": "Elementary",
+        "Noyes": "Elementary",
+        "Oyster-Adams": "PK-8",
+        "Patterson": "Elementary",
+        "Payne": "Elementary",
+        "Peabody Watkins": "Elementary",
+        "Phelps": "High",
+        "Plummer": "Elementary",
+        "Powell": "Elementary",
+        "Randle Highlands": "Elementary",
+        "Raymond": "Elementary",
+        "River Terrace": "3-12",
+        "Roosevelt": "High",
+        "Savoy": "Elementary",
+        "School Without Walls": "PK-8",
+        "Seaton": "Elementary",
+        "Shepherd": "Elementary",
+        "Simon": "Elementary",
+        "Smothers": "Elementary",
+        "Sousa": "Middle",
+        "Stanton": "Elementary",
+        "Stevens": "PK",
+        "Stoddert": "Elementary",
+        "Stuart-Hobson": "Middle",
+        "SWS Goding": "Elementary",
+        "SWW @ Francis Stevens": "PK-8",
+        "Takoma": "Elementary",
+        "Thomas": "Elementary",
+        "Thomson": "Elementary",
+        "Truesdell": "Elementary",
+        "Tubman": "Elementary",
+        "Turner": "Elementary",
+        "Tyler": "Elementary",
+        "Van Ness": "Elementary",
+        "Walker-Jones": "PK-8",
+        "Wells": "Middle",
+        "West": "Elementary",
+        "Whittier": "Elementary",
+        "Wilson": "High",
+        "Woodson": "High",
+    }
+    all_data["school_level"] = (
+        all_data["school"].map(school_level_decode).fillna("Unknown")
+    )
+    return all_data
