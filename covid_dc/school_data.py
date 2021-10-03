@@ -525,3 +525,22 @@ def append_school_levels(all_data: object) -> object:
         all_data["school"].map(school_level_decode).fillna("Unknown")
     )
     return all_data
+
+
+def run_one_shot_fixes_html(incidents: list) -> list:
+    """
+    Sometimes the notification text is just too ratchet to parse, so these are
+    manual fixes to known past issues. This version runs on the text in the
+    html.
+    """
+    incidents[
+        incidents.index(
+            "A letter to Emery was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021."
+        )
+    ] = "A letter to the Emery community was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021."
+    incidents[
+        incidents.index(
+            "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. "
+        )
+    ] = "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively."
+    return incidents
