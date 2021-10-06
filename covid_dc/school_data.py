@@ -199,6 +199,7 @@ def fix_school_names(all_data: object) -> object:
         "C.W. Harris": "Harris",
         "Dorothy I. Height": "Height",
         "Duke Ellington": "Ellington",
+        "Dunbar High School": "Dunbar",
         "Excel Academy": "Excel",
         "Excel-Academy": "Excel",
         "GarrisonElementary": "Garrison",
@@ -232,7 +233,6 @@ def fix_school_names(all_data: object) -> object:
         "Nalle Elementary School": "Nalle",
         "Oyster-Adams (Adams)": "Oyster-Adams",
         "Peabody and Watkins": "Peabody Watkins",
-        "Peabody": "Peabody Watkins",
         "Ron Brown": "Brown",
         "Roosevelt STAY High School": "Roosevelt STAY",
         "School Without Walls at Francis-Stevens": "School Without Walls",
@@ -247,6 +247,7 @@ def fix_school_names(all_data: object) -> object:
         "Tubman Elementary School": "Tubman",
         "Van Ness Elementary School": "Van Ness",
         "Walls": "School Without Walls",
+        "Watkins Elementary School": "Watkins",
     }
     all_data["school"] = all_data["school"].replace(name_corrections)
     return all_data
@@ -328,6 +329,7 @@ def append_school_levels(all_data: object) -> object:
         "Oyster-Adams": "PK-8",
         "Patterson": "Elementary",
         "Payne": "Elementary",
+        "Peabody": "Elementary",
         "Peabody Watkins": "Elementary",
         "Phelps": "High",
         "Plummer": "Elementary",
@@ -358,6 +360,7 @@ def append_school_levels(all_data: object) -> object:
         "Tyler": "Elementary",
         "Van Ness": "Elementary",
         "Walker-Jones": "PK-8",
+        "Watkins": "Elementary",
         "Wells": "Middle",
         "West": "Elementary",
         "Whittier": "Elementary",
