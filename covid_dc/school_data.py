@@ -7,6 +7,7 @@ import requests
 
 from bs4 import BeautifulSoup
 from dateparser.search import search_dates
+import gspread
 import pandas as pd
 
 
@@ -386,3 +387,33 @@ def run_one_shot_fixes_html(incidents: list) -> list:
         )
     ] = "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively."
     return incidents
+
+
+def update_gsheet(all_data: object):
+    # Just hardcoding this for now
+    gc = gspread.service_account(
+        filename="~/.config/gspread/covid-dc-87e2feea6431.json"
+    )
+    covid = gc.open("DCPS covid data 2021-2022")
+    data = covid.worksheet("data")
+    all_data = all_data[all_data.incident_date >= "2021-08-20"][
+        [
+            "incident_date",
+            "letter_date",
+            "school",
+            "cases_count",
+            "school_level",
+            "ward",
+            "incident_text",
+        ]
+    ]
+    # Google Data Studio is being a chaos monkey about recognizing dates.
+    # I don't know why formatting them two different ways makes it work,
+    # but it's the only thing that works so we're rolling with it.
+    # I suspect that the underlying JSON or whatever that defines the
+    # gsheet has tied itself in a knot about the types because of all the
+    # changes made over time.
+    all_data["incident_date"] = all_data["incident_date"].dt.strftime("%Y%m%d")
+    all_data["letter_date"] = all_data["letter_date"].dt.strftime("%Y-%m-%d")
+    data.update([all_data.columns.values.tolist()] + all_data.values.tolist())
+    gc.session.close()
