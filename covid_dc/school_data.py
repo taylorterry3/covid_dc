@@ -395,7 +395,7 @@ def run_one_shot_fixes_html(incidents: list) -> list:
 def update_gsheet(all_data: object):
     # Just hardcoding this for now
     gc = gspread.service_account(
-        filename="~/.config/gspread/covid-dc-87e2feea6431.json"
+        filename="/Users/tterry/.config/gspread/covid-dc-87e2feea6431.json"
     )
     covid = gc.open("DCPS covid data 2021-2022")
     data = covid.worksheet("data")
