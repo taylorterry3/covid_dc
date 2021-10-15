@@ -40,9 +40,14 @@ def scrape_notifications_data(
     links = soup.select(".uagb-post__title a")
     incidents = []
     for link in links:
-        page = requests.get(link["href"], headers=headers)
-        soup = BeautifulSoup(page.content, "html.parser")
-        incidents.append(soup.select(".post__content__cat+ p")[0].text)
+        # I hate this try/except but they broke the CSS on Dunbar Oct 13 and I
+        # need to defend against future errors
+        try:
+            page = requests.get(link["href"], headers=headers)
+            soup = BeautifulSoup(page.content, "html.parser")
+            incidents.append(soup.select(".post__content__cat+ p")[0].text)
+        except:
+            print(link)
     return incidents
 
 
@@ -389,6 +394,9 @@ def run_one_shot_fixes_html(incidents: list) -> list:
             "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. "
         )
     ] = "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively."
+    incidents.append(
+        "A letter to the Dunbar High School community was sent on October 13, 2021, notifying them of a positive COVID-19 case in the building on October 12, 2021."
+    )
     return incidents
 
 
