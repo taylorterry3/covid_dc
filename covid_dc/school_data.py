@@ -397,6 +397,13 @@ def run_one_shot_fixes_html(incidents: list) -> list:
     incidents.append(
         "A letter to the Dunbar High School community was sent on October 13, 2021, notifying them of a positive COVID-19 case in the building on October 12, 2021."
     )
+    incidents[
+        incidents.index(
+            "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12 and October 13, respectively."
+        )
+    ] = "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12, and October 13, respectively."
+
+    "notifying them of two positive COVID-19 cases in the building on October 12 and October 13, respectively"
     return incidents
 
 
