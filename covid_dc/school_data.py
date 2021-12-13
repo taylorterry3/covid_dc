@@ -384,24 +384,32 @@ def run_one_shot_fixes_html(incidents: list) -> list:
     manual fixes to known past issues. This version runs on the text in the
     html.
     """
-    incidents[
-        incidents.index(
-            "A letter to Emery was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021."
-        )
-    ] = "A letter to the Emery community was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021."
-    incidents[
-        incidents.index(
-            "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. "
-        )
-    ] = "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively."
+
+    # Constructing the dict by zipping through tuples for visual formatting here.
+    substitutions = dict(
+        [
+            (
+                "A letter to Emery was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021.",
+                "A letter to the Emery community was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021.",
+            ),
+            (
+                "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. ",
+                "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively.",
+            ),
+            (
+                "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12 and October 13, respectively.",
+                "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12, and October 13, respectively.",
+            ),
+        ]
+    )
+
+    for i in incidents:
+        if i in substitutions:
+            incidents[incidents.index(i)] = substitutions[i]
+
     incidents.append(
         "A letter to the Dunbar High School community was sent on October 13, 2021, notifying them of a positive COVID-19 case in the building on October 12, 2021."
     )
-    incidents[
-        incidents.index(
-            "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12 and October 13, respectively."
-        )
-    ] = "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12, and October 13, respectively."
 
     return incidents
 
