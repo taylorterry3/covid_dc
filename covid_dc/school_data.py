@@ -380,8 +380,7 @@ def append_school_levels(all_data: object) -> object:
 def fix_multiple_dates(incidents: list) -> list:
     """
     dateparser doesn't understand "May 7 and May 9, 2021" as two different
-    dates, so this spoonfeeds it the comma and year to make that into
-    "May 7, 2021 and May 9, 2021"
+    dates, so this injects the comma to make it "May 7, and May 9, 2021".
     """
 
     two_dates = re.compile(
