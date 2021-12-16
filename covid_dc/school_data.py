@@ -377,6 +377,20 @@ def append_school_levels(all_data: object) -> object:
     return all_data
 
 
+def fix_multiple_dates(incidents: list) -> list:
+    """
+    dateparser doesn't understand "May 7 and May 9, 2021" as two different
+    dates, so this spoonfeeds it the comma and year to make that into
+    "May 7, 2021 and May 9, 2021"
+    """
+
+    two_dates = re.compile(
+        r"((?:January|February|March|April|May|June|July|August|September|October|November|December) (?:[0-9]{1,2}))( )"
+    )
+
+    return [two_dates.sub(r"\1, ", i) for i in incidents]
+
+
 def run_one_shot_fixes_html(incidents: list) -> list:
     """
     Sometimes the notification text is just too ratchet to parse, so these are
@@ -395,10 +409,6 @@ def run_one_shot_fixes_html(incidents: list) -> list:
                 "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. ",
                 "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively.",
             ),
-            (
-                "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12 and October 13, respectively.",
-                "A letter to the Jefferson community was sent on October 15, 2021, notifying them of two positive COVID-19 cases in the building on October 12, and October 13, respectively.",
-            ),
         ]
     )
 
@@ -409,6 +419,13 @@ def run_one_shot_fixes_html(incidents: list) -> list:
     incidents.append(
         "A letter to the Dunbar High School community was sent on October 13, 2021, notifying them of a positive COVID-19 case in the building on October 12, 2021."
     )
+
+    removals = [
+        "This message was sent to the Whittier Elementary community on December 15, 2021."
+    ]
+    for r in removals:
+        if r in incidents:
+            incidents.remove(r)
 
     return incidents
 
