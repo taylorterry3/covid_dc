@@ -7,6 +7,7 @@ import requests
 
 from bs4 import BeautifulSoup
 from dateparser.search import search_dates
+import gspread
 import pandas as pd
 import textract
 
@@ -40,9 +41,14 @@ def scrape_notifications_data(
     links = soup.select(".uagb-post__title a")
     incidents = []
     for link in links:
-        page = requests.get(link["href"], headers=headers)
-        soup = BeautifulSoup(page.content, "html.parser")
-        incidents.append(soup.select(".post__content__cat+ p")[0].text)
+        # I hate this try/except but they broke the CSS on Dunbar Oct 13 and I
+        # need to defend against future errors
+        try:
+            page = requests.get(link["href"], headers=headers)
+            soup = BeautifulSoup(page.content, "html.parser")
+            incidents.append(soup.select(".post__content__cat+ p")[0].text)
+        except:
+            print(link)
     return incidents
 
 
@@ -356,6 +362,7 @@ def fix_school_names(all_data: object) -> object:
         "C.W. Harris": "Harris",
         "Dorothy I. Height": "Height",
         "Duke Ellington": "Ellington",
+        "Dunbar High School": "Dunbar",
         "Excel Academy": "Excel",
         "Excel-Academy": "Excel",
         "GarrisonElementary": "Garrison",
@@ -368,8 +375,7 @@ def fix_school_names(all_data: object) -> object:
         "Houston ES": "Houston",
         "Ida.B.Wells": "Wells",
         "Ida B. Wells": "Wells",
-        "J.O. Wilson Elementary": "Wilson",
-        "J.O. Wilson": "Wilson",
+        "J.O. Wilson Elementary": "J.O. Wilson",
         "Jefferson MS": "Jefferson",
         "John Hayden Johnson Middle School": "Johnson",
         "Kelly Miller": "Miller",
@@ -389,7 +395,6 @@ def fix_school_names(all_data: object) -> object:
         "Nalle Elementary School": "Nalle",
         "Oyster-Adams (Adams)": "Oyster-Adams",
         "Peabody and Watkins": "Peabody Watkins",
-        "Peabody": "Peabody Watkins",
         "Ron Brown": "Brown",
         "Roosevelt STAY High School": "Roosevelt STAY",
         "School Without Walls at Francis-Stevens": "School Without Walls",
@@ -404,6 +409,7 @@ def fix_school_names(all_data: object) -> object:
         "Tubman Elementary School": "Tubman",
         "Van Ness Elementary School": "Van Ness",
         "Walls": "School Without Walls",
+        "Watkins Elementary School": "Watkins",
     }
     all_data["school"] = all_data["school"].replace(name_corrections)
     return all_data
@@ -485,6 +491,7 @@ def append_school_levels(all_data: object) -> object:
         "Oyster-Adams": "PK-8",
         "Patterson": "Elementary",
         "Payne": "Elementary",
+        "Peabody": "Elementary",
         "Peabody Watkins": "Elementary",
         "Phelps": "High",
         "Plummer": "Elementary",
@@ -515,6 +522,7 @@ def append_school_levels(all_data: object) -> object:
         "Tyler": "Elementary",
         "Van Ness": "Elementary",
         "Walker-Jones": "PK-8",
+        "Watkins": "Elementary",
         "Wells": "Middle",
         "West": "Elementary",
         "Whittier": "Elementary",
@@ -527,20 +535,83 @@ def append_school_levels(all_data: object) -> object:
     return all_data
 
 
+def fix_multiple_dates(incidents: list) -> list:
+    """
+    dateparser doesn't understand "May 7 and May 9, 2021" as two different
+    dates, so this injects the comma to make it "May 7, and May 9, 2021".
+    """
+
+    two_dates = re.compile(
+        r"((?:January|February|March|April|May|June|July|August|September|October|November|December) (?:[0-9]{1,2}))( )"
+    )
+
+    return [two_dates.sub(r"\1, ", i) for i in incidents]
+
+
 def run_one_shot_fixes_html(incidents: list) -> list:
     """
     Sometimes the notification text is just too ratchet to parse, so these are
     manual fixes to known past issues. This version runs on the text in the
     html.
     """
-    incidents[
-        incidents.index(
-            "A letter to Emery was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021."
-        )
-    ] = "A letter to the Emery community was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021."
-    incidents[
-        incidents.index(
-            "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. "
-        )
-    ] = "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively."
+
+    # Constructing the dict by zipping through tuples for visual formatting here.
+    substitutions = dict(
+        [
+            (
+                "A letter to Emery was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021.",
+                "A letter to the Emery community was sent on September 29, 2021, notifying them of a positive COVID-19 case in the building on September 27, 2021.",
+            ),
+            (
+                "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24 and September 30, 2021, respectively. ",
+                "A letter to the Dunbar community was sent on October 1, 2021, notifying them of two positive COVID-19 cases in the building on September 24, and September 30, respectively.",
+            ),
+        ]
+    )
+
+    for i in incidents:
+        if i in substitutions:
+            incidents[incidents.index(i)] = substitutions[i]
+
+    incidents.append(
+        "A letter to the Dunbar High School community was sent on October 13, 2021, notifying them of a positive COVID-19 case in the building on October 12, 2021."
+    )
+
+    removals = [
+        "This message was sent to the Whittier Elementary community on December 15, 2021."
+    ]
+    for r in removals:
+        if r in incidents:
+            incidents.remove(r)
+
     return incidents
+
+
+def update_gsheet(all_data: object):
+    # Just hardcoding this for now
+    gc = gspread.service_account(
+        filename="/Users/tterry/.config/gspread/covid-dc-87e2feea6431.json"
+    )
+    covid = gc.open("DCPS covid data 2021-2022")
+    data = covid.worksheet("data")
+    all_data = all_data[all_data.incident_date >= "2021-08-20"][
+        [
+            "incident_date",
+            "letter_date",
+            "school",
+            "cases_count",
+            "school_level",
+            "ward",
+            "incident_text",
+        ]
+    ]
+    # Google Data Studio is being a chaos monkey about recognizing dates.
+    # I don't know why formatting them two different ways makes it work,
+    # but it's the only thing that works so we're rolling with it.
+    # I suspect that the underlying JSON or whatever that defines the
+    # gsheet has tied itself in a knot about the types because of all the
+    # changes made over time.
+    all_data["incident_date"] = all_data["incident_date"].dt.strftime("%Y%m%d")
+    all_data["letter_date"] = all_data["letter_date"].dt.strftime("%Y-%m-%d")
+    data.update([all_data.columns.values.tolist()] + all_data.values.tolist())
+    gc.session.close()
