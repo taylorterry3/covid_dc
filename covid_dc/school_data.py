@@ -11,6 +11,131 @@ import gspread
 import pandas as pd
 import textract
 
+# this only gets used once, but dumping it here for now pending reorg
+SCHOOLS = [
+    "aiton-elementary-school",
+    "amidon-bowen-elementary-school",
+    "anacostia-high-school",
+    "ballou-high-school",
+    "ballou-stay-high-school",
+    "bancroft-elementary-school",
+    "banneker-high-school",
+    "bard-high-school",
+    "barnard-elementary-school",
+    "beers-elementary-school",
+    "boone-elementary-school",
+    "brent-elementary-school",
+    "brightwood-elementary-school",
+    "brookland-middle-school",
+    "browne-education-campus",
+    "bruce-monroe-elementary-school",
+    "bunker-hill-elementary-school",
+    "burroughs-elementary-school",
+    "burrville-elementary-school",
+    "c-w-harris-elementary-school",
+    "c-w-harris-elementary-school",
+    "capitol-hill-montessori-school",
+    "cardozo-education-campus",
+    "cleveland-elementary-school",
+    "columbia-heights-education-campus",
+    "coolidge-high-school",
+    "deal-middle-school",
+    "dorothy-i-height-elementary-school",
+    "drew-elementary-school",
+    "duke-ellington-high-school",
+    "dunbar-high-school",
+    "eastern-high-school",
+    "eaton-elementary-school",
+    "eliot-hine-middle-school",
+    "emery-building",
+    "excel-academy",
+    "f-s-key-elementary-school",
+    "garfield-elementary-school",
+    "garrison-elementary-school",
+    "h-d-woodson-high-school",
+    "hardy-middle-school",
+    "hart-middle-school",
+    "hd-cooke-elementary-school",
+    "hearst-elementary-school",
+    "hendley-elementary-school",
+    "houston-elementary-school",
+    "hyde-addison-elementary-school",
+    "ida-b-wells-middle-school",
+    "j-o-wilson-elementary-school",
+    "janney-elementary-school",
+    "jefferson-middle-school",
+    "johnson-middle-school",
+    "kelly-miller-middle-school",
+    "ketcham-elementary-school",
+    "kimball-elementary-school",
+    "king-elementary-school",
+    "kramer-middle-school",
+    "lafayette-elementary-school",
+    "langdon-elementary-school",
+    "langley-elementary-school",
+    "lasalle-backus-education-campus",
+    "leckie-education-campus",
+    "ludlow-taylor-elementary-school",
+    "luke-c-moore-high-school",
+    "macfarland-middle-school",
+    "malcolm-x-elementary-school",
+    "mann-elementary-school",
+    "marie-reed-elementary-school",
+    "maury-elementary-school",
+    "mckinley-middle-school",
+    "mckinley-tech-high-school",
+    "military-road-early-learning-center",
+    "miner-elementary-school",
+    "moten-elementary-school",
+    "murch-elementary-school",
+    "nalle-elementary-school",
+    "noyes-elementary-school",
+    "oyster-adams-bilingual-school",
+    "oyster-adams-bilingual-school",
+    "patterson-elementary-school",
+    "payne-elementary-school",
+    "peabody-elementary-school",
+    "phelps-ace-high-school",
+    "plummer-elementary-school",
+    "powell-elementary-school",
+    "randle-highlands-elementary-school",
+    "raymond-elementary-school",
+    "river-terrace-education-campus",
+    "ron-brown-college-preparatory-high-school",
+    "roosevelt-high-school",
+    "roosevelt-stay-high-school",
+    "ross-elementary-school",
+    "savoy-elementary-school",
+    "school-within-school-goding",
+    "school-without-walls",
+    "school-without-walls-francis-stevens",
+    "seaton-elementary-school",
+    "shepherd-elementary-school",
+    "simon-elementary-school",
+    "smothers-elementary-school",
+    "sousa-middle-school",
+    "stanton-elementary-school",
+    "stevens-early-childhood-center",
+    "stevens-early-learning-center",
+    "stoddert-elementary-school",
+    "stuart-hobson-middle-school",
+    "takoma-elementary-school",
+    "thomas-elementary-school",
+    "thomson-elementary-school",
+    "truesdell-elementary-school",
+    "tubman-elementary-school",
+    "turner-elementary-school",
+    "tyler-elementary-school",
+    "van-ness-elementary-school",
+    "walker-jones-education-campus",
+    "watkins-elementary-school",
+    "west-elementary-school",
+    "wheatley-education-campus-school",
+    "whittier-elementary-school",
+    "whittier-elementary-urgent-message-on-virtual-learning-for-all-students",
+    "wilson-high-school",
+]
+
 
 def scrape_articles_data(
     rs_url="https://dcpsreopenstrong.com/category/articles/",
@@ -80,6 +205,42 @@ def dl_and_read_pdfs(
             ).strip()
             incidents.append(incident)
     return incidents
+
+
+def get_pdfs_per_school(school: str) -> list:
+    """
+    The URLs seem to be consistent within a school even when they fall off of
+    the page, so this rolls through them until it doesn't find something at the
+    next int value. Returns a list of tuples (school, page_url, pdf_url)
+    """
+    url_base: str = "https://dcpsreopenstrong.com/articles/"
+    url_mid: str = "-covid-19-notification"
+    headers: dict = {"User-Agent": "Mozilla/5.0"}
+    urls: list = []
+    i: int = 1
+    page_found: bool = True
+    while page_found:
+        if i == 1:
+            page_url: str = url_base + school + url_mid + "/"
+        else:
+            page_url: str = url_base + school + url_mid + "-" + str(i) + "/"
+        page: object = requests.get(page_url, headers=headers)
+        soup: object = BeautifulSoup(page.content, "html.parser")
+
+        try:
+            pdf_url: str = soup.select("p+ .wp-block-file .wp-block-file__button")[0][
+                "href"
+            ]
+            r = requests.get(pdf_url)
+            # sloppy but w/ev
+            with open("../data/input/pdf/" + pdf_url.split("/")[-1], "wb") as f:
+                f.write(r.content)
+            urls.extend((school, page_url, pdf_url))
+            i += 1
+        except:
+            page_found = False
+
+    return urls
 
 
 def parse_incidents(incidents: list) -> dict:
