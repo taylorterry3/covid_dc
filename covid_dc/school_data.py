@@ -386,7 +386,7 @@ def parse_pdfs(incidents: list) -> dict:
         # bp = boilerplate
         bp_0 = "Dear "
         bp_1 = ", This letter is to inform you"
-        bp_2 = "As determined by"
+        bp_2 = "medically cleared"
 
         main_text = re.search(r"(.*)" + re.escape(bp_2), incident).group(1)
 
