@@ -250,7 +250,7 @@ def get_pdfs_per_school(school: str, sleep_time: int = 0) -> list:
 def parse_incidents(incidents: list) -> dict:
     """
     Parse data from text in the format found on the Reopen Strong website.
-    This parser takes a list and returns a dict because
+    This parser takes a list and returns a dict to help get it into a DF.
     """
     schools = []
     letter_dates = []
