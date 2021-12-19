@@ -4,6 +4,7 @@
 
 import re
 import requests
+import time
 
 from bs4 import BeautifulSoup
 from dateparser.search import search_dates
@@ -207,7 +208,8 @@ def dl_and_read_pdfs(
     return incidents
 
 
-def get_pdfs_per_school(school: str) -> list:
+# need to fix output format but whatever
+def get_pdfs_per_school(school: str, sleep_time: int = 0) -> list:
     """
     The URLs seem to be consistent within a school even when they fall off of
     the page, so this rolls through them until it doesn't find something at the
@@ -231,14 +233,16 @@ def get_pdfs_per_school(school: str) -> list:
             pdf_url: str = soup.select("p+ .wp-block-file .wp-block-file__button")[0][
                 "href"
             ]
-            r = requests.get(pdf_url)
+            r = requests.get(pdf_url, headers=headers)
             # sloppy but w/ev
             with open("../data/input/pdf/" + pdf_url.split("/")[-1], "wb") as f:
                 f.write(r.content)
-            urls.extend((school, page_url, pdf_url))
+            urls.append([school, page_url, pdf_url])
             i += 1
         except:
             page_found = False
+
+        time.sleep(sleep_time)
 
     return urls
 
